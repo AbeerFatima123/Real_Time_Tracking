@@ -2,16 +2,21 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const http = require("http");
+const helmet = require("helmet"); // Add helmet for security
 
 const socketio = require("socket.io");
 
 const server = http.createServer(app);
 const io = socketio(server);
 
-// Set view engine
-app.set("view engine", "ejs");
+// Use helmet for basic security headers
+app.use(helmet());
 
-// Set up static file serving - this was the issue
+// Set view engine and views directory
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
 // Store all active users and their locations
@@ -85,7 +90,14 @@ app.get("/", function (req, res) {
   res.render("index");
 });
 
-// Start server
-server.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+// Basic error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something went wrong!");
+});
+
+// Start server on dynamic port for production
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
